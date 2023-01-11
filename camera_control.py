@@ -1,9 +1,11 @@
 import argparse
+import os
 from pathlib import Path
 from threading import Thread
 from time import time
 
 import EasyPySpin
+import rasterio
 import cv2
 
 IMG_BASE_DIR = "images"
@@ -11,10 +13,11 @@ IMG_BASE_DIR = "images"
 
 class VideoPlayback:
 
-    def __init__(self, video_file="Africa2EU_50x.mp4", start_at = 100):
+    def __init__(self, video_file="sources/Sahara2EU.webm", start_at = 200):
         self.background_video = cv2.VideoCapture(video_file)
 
         fps = self.background_video.get(cv2.CAP_PROP_FPS)
+        print(f"background fps {fps}")
         self.background_video.set(cv2.CAP_PROP_POS_FRAMES, start_at * fps)
 
         self.grabbed, self.frame = self.background_video.read()
@@ -26,7 +29,8 @@ class VideoPlayback:
         self.thread.start()
         return self
     
-    def get(self) :
+    def get(self):
+        # os.environ['DISPLAY'] = ":1"
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         while self.background_video.isOpened():
@@ -34,6 +38,7 @@ class VideoPlayback:
                 return
             self.grabbed, self.frame = self.background_video.read()
             # print(self.grabbed)
+            # print(self.frame.shape)
             cv2.imshow("window", self.frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.stop()
@@ -50,39 +55,93 @@ class VideoPlayback:
         self.background_video.release()
 
 
+class StatickBackground:
+
+    def __init__(self, img_file="sources/BlackMarble_2016_C1_geo.tif") -> None:
+        src = rasterio.open(img_file)
+        img = src.read()
+
+        left_offset = 15000
+        top_offset = 10000
+
+        display_width = 3840
+        # display_width = 1920
+        display_height = 2160
+        # display_height = 1080
+
+        cropped_img = img[..., left_offset:left_offset+display_height, top_offset:top_offset+display_width]
+        cropped_img = cropped_img.transpose(1, 2, 0)
+        self.img_background = cv2.cvtColor(cropped_img, cv2.COLOR_RGB2BGR)
+        
+    def start(self):
+        self.thread = Thread(target=self.show, args=())
+        # self.thread.daemon = True
+        self.thread.start()
+        return self
+    
+    def show(self):
+        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty("window",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.imshow("window", self.img_background)
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+    
+    def stop(self):
+        cv2.destroyAllWindows()
+        self.thread.join()
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--session", required=True, help="Session name")
+    parser.add_argument("-f", "--folder_name", required=True, help="Folder name")
     parser.add_argument("-n", "--num_frames", type=int, default=20, help="Number of frames to capture")
+    parser.add_argument("-s", "--start_at", type=int, default=200, help="Start video at specific position (seconds)")
+    parser.add_argument("-p", "--photo", action="store_true", help="Use photo (static background) instead of video")
     args = parser.parse_args()
 
-    img_dir = f"{IMG_BASE_DIR}/{args.session}"
-    Path(img_dir).mkdir(parents=True, exist_ok=True)
+    img_dir = f"{IMG_BASE_DIR}/{args.folder_name}"
+    Path(img_dir).mkdir(parents=True, exist_ok=False)
 
-    cap = EasyPySpin.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FPS, 4)
+    try:
+        cap = EasyPySpin.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FPS, 4)
 
-    # cap.set(cv2.CAP_PROP_EXPOSURE, 100) # us
-    # cap.set(cv2.CAP_PROP_EXPOSURE, -1) # default
-    # exposure = cap.get(cv2.CAP_PROP_EXPOSURE)
-    # print(exposure)
-    # gain  = cap.get(cv2.CAP_PROP_GAIN)
-    # gamma  = cap.get(cv2.CAP_PROP_GAMMA)
+        if not cap.isOpened():
+            print("Camera can't open\nexit")
+            cap.release()
+            exit(-1)
 
-    video_playback = VideoPlayback()
-    video_playback.start()
+        # cap.set(cv2.CAP_PROP_EXPOSURE, 100) # us
+        # cap.set(cv2.CAP_PROP_EXPOSURE, -1) # default
+        # exposure = cap.get(cv2.CAP_PROP_EXPOSURE)
+        # print(exposure)
+        # gain  = cap.get(cv2.CAP_PROP_GAIN)
+        # gamma  = cap.get(cv2.CAP_PROP_GAMMA)
 
-    i = 0
-    while i < args.num_frames:
-        i += 1
-        ret, frame = cap.read()
-        print(ret, i, time())
-        file_name = f"{img_dir}/frame_{i}.png"
-        cv2.imwrite(file_name, frame)
+        if args.photo:
+            background = StatickBackground()
+        else:
+            background = VideoPlayback(start_at=args.start_at)
+        background.start()
 
-    print("stop video")
-    video_playback.stop()
+        i = 0
+        while i < args.num_frames:
+            i += 1
+            ret, frame = cap.read()
+            print(ret, i, time())
+            file_name = f"{img_dir}/frame_{i}.png"
+            cv2.imwrite(file_name, frame)
+
+        print("camera release")
+        cap.release()        
+        
+        print("stop background")
+        background.stop()
+
+    except KeyboardInterrupt:
+        print("Capture interrupted")
+        cap.release()
+        background.stop()
 
 
 
