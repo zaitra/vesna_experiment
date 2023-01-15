@@ -13,7 +13,7 @@ IMG_BASE_DIR = "images"
 
 class VideoPlayback:
 
-    def __init__(self, video_file="sources/Sahara2EU.webm", start_at = 200):
+    def __init__(self, video_file="sources/Sahara2EU.webm", start_at = 150):
         self.background_video = cv2.VideoCapture(video_file)
 
         fps = self.background_video.get(cv2.CAP_PROP_FPS)
@@ -111,6 +111,8 @@ if __name__ == '__main__':
             cap.release()
             exit(-1)
 
+        cap.set_pyspin_value("AdcBitDepth", "Bit12")
+        cap.set_pyspin_value("PixelFormat", "Mono16")
         # cap.set(cv2.CAP_PROP_EXPOSURE, 100) # us
         # cap.set(cv2.CAP_PROP_EXPOSURE, -1) # default
         # exposure = cap.get(cv2.CAP_PROP_EXPOSURE)
@@ -128,7 +130,8 @@ if __name__ == '__main__':
         while i < args.num_frames:
             i += 1
             ret, frame = cap.read()
-            print(ret, i, time())
+
+            print(f"frame read={ret}, {i=}, dtype={frame.dtype}, exposure={cap.get(cv2.CAP_PROP_EXPOSURE)}, time={time()}")
             file_name = f"{img_dir}/frame_{i}.png"
             cv2.imwrite(file_name, frame)
 
