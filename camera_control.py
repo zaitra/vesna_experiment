@@ -8,29 +8,72 @@ import EasyPySpin
 import rasterio
 import cv2
 
-import structlog
 import logging
+import structlog
 
 import typer
 from typing_extensions import Annotated
+
+import boto3
 
 IMG_BASE_DIR = "images"
 
 
 class VideoPlayback:
-    def __init__(self, video_file="sources/Sahara2EU-0025.webm", start_at=150):
+    def __init__(
+        self, video_file="sources/Sahara2EU-002.webm", start_at=150, download=False
+    ):
         if not Path(video_file).exists():
             structlog.get_logger().warning(
-                "Video %s was not found and won't be opened.", video_file
+                "Video %s was not found locally.", video_file
             )
 
+            s3 = boto3.client("s3")
+            bucket_name = "vesna-camera-control-storage"
+            key = "Sahara2EU-002.webm"
+            structlog.get_logger().info(
+                "Attempting to fetch video remotely from %s", bucket_name + "/" + key
+            )
+
+            response = s3.head_object(Bucket=bucket_name, Key=key)
+            content_length = int(response["ContentLength"])
+
+            if download:
+                structlog.get_logger().info(
+                    "Downloading and storing video, this may take a while depending on file size."
+                )
+                s3.download_file(bucket_name, key, video_file)
+            else:
+                structlog.get_logger().info(
+                    "Remotely streaming video, file won't be stored locally."
+                )
+                structlog.get_logger().warning(
+                    "It may take a while for OpenCV to begin playing a streamed video from the start_at frame!"
+                )
+                try:
+                    video_file = s3.generate_presigned_url(
+                        ClientMethod="get_object",
+                        Params={"Bucket": bucket_name, "Key": key},
+                    )
+                except Exception:
+                    structlog.get_logger().warning(
+                        "Could not reach remote storage. Proceeding without video..."
+                    )
+
         self.background_video = cv2.VideoCapture(video_file)
+        structlog.get_logger().info("Video fetched.")
 
         fps = self.background_video.get(cv2.CAP_PROP_FPS)
-        structlog.get_logger().info(f"background fps {fps}")
+        structlog.get_logger().info(f"Background FPS {fps}, setting start_at frame...")
         self.background_video.set(cv2.CAP_PROP_POS_FRAMES, start_at * fps)
+        structlog.get_logger().info(
+            "Set start_at frame to %d, %d seconds in.", start_at * fps, start_at
+        )
 
-        self.grabbed, self.frame = self.background_video.read()
+        (
+            self.grabbed,
+            self.frame,
+        ) = self.background_video.read()  # What is this here for?
         self.stopped = False
 
     def start(self):
@@ -72,10 +115,15 @@ class StatickBackground:
             )
 
         src = rasterio.open(img_file)
+        structlog.get_logger().info("Image opened.")
         img = src.read()
 
         left_offset = 15000
         top_offset = 10000
+
+        structlog.get_logger().info(
+            "Cropping image offsets to left = {left_offset} and top = {top_offset}."
+        )
 
         display_width = 3840
         # display_width = 1920
@@ -89,6 +137,11 @@ class StatickBackground:
         ]
         cropped_img = cropped_img.transpose(1, 2, 0)
         self.img_background = cv2.cvtColor(cropped_img, cv2.COLOR_RGB2BGR)
+        structlog.get_logger().info(
+            "Cropped background prepared. Press a key to close."
+        )
+
+        self.stopped = False
 
     def start(self):
         self.thread = Thread(target=self.show, args=())
@@ -100,10 +153,13 @@ class StatickBackground:
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow("window", self.img_background)
-        if cv2.waitKey(0) & 0xFF == ord("q"):
+        if (
+            cv2.waitKey(0) & 0xFF == ord("q")
+        ) or self.stopped:  # Why is the bitwise operation necessary?
             cv2.destroyAllWindows()
 
     def stop(self):
+        self.stopped = True
         cv2.destroyAllWindows()
         self.thread.join()
 
@@ -116,16 +172,22 @@ def main(
     ] = 200,
     photo: Annotated[
         bool, typer.Argument(help="Use photo (static background) instead of video")
+    ] = True,
+    download: Annotated[
+        bool,
+        typer.Argument(
+            help="Download and locally store source footage if obtaining it remotely."
+        ),
     ] = False,
 ):
 
+    # Initiate logger
     log = structlog.get_logger()
 
     # Create new Target Folder for captured images
-    # img_dir = f"{IMG_BASE_DIR}/{args.folder_name}"
     img_dir = f"{IMG_BASE_DIR}/{folder_name}"
     if Path(img_dir).exists():
-        log.info("Chosen directory for images already exists:")
+        log.info("Chosen directory for target images already exists;")
         while Path(img_dir).exists():
             img_dir = img_dir + "'"
         log.info("New target directory is %s", img_dir)
@@ -150,34 +212,42 @@ def main(
         # gain  = cap.get(cv2.CAP_PROP_GAIN)
         # gamma  = cap.get(cv2.CAP_PROP_GAMMA)
 
-        # if args.photo:
         if photo:
             background = StatickBackground()
         else:
-            # background = VideoPlayback(start_at=args.start_at)
-            background = VideoPlayback(start_at=start_at)
+            background = VideoPlayback(start_at=start_at, download=download)
+
+        # Frame Discarding Method for start_at remote streaming video workaround; (it doesn't really help...)
+        """current_frame = 0
+        while current_frame < start_at * 30:
+            log.info("Discarding frame %d", current_frame)
+            ret, _ = background.background_video.read()
+            if not ret:
+                break
+            current_frame += 1"""
+
         background.start()
 
+        # Begin camera capture loop
         i = 0
-        # while i < args.num_frames:
         while i < num_frames:
             i += 1
             ret, frame = cap.read()
 
             log.info(
-                f"frame read={ret}, {i=}, dtype={frame.dtype}, exposure={cap.get(cv2.CAP_PROP_EXPOSURE)}, time={time()}"
+                f"Frame: read={ret}, {i=}, dtype={frame.dtype}, exposure={cap.get(cv2.CAP_PROP_EXPOSURE)}, time={time()}"
             )
             file_name = f"{img_dir}/frame_{i}.png"
             cv2.imwrite(file_name, frame)
 
-        log.info("Camera release")
+        log.info("Camera released.")
         cap.release()
 
-        log.info("Stop background")
+        log.info("Stopping background.")
         background.stop()
 
     except KeyboardInterrupt:
-        log.info("Capture interrupted")
+        log.warning("Capture interrupted.")
         cap.release()
         background.stop()
 
