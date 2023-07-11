@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "vesna-datagen"
+version = "0.1.0"
+description = "Vesna data generation package"
+authors = ["Zaitra s.r.o."]
+license = "MIT"
+readme = "README.md"
+#packages = [{include = "vesna_datagen"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+EasyPySpin = "2.0.1"
+structlog = "23.1.0"
+typer = "0.9.0"
+boto3 = "1.28.0"
+opencv-python = "^4.8.0.74"
+rasterio = "^1.3.8"
+numpy = "^1.25.1"
+matplotlib = "^3.7.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
