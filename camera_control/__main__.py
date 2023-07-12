@@ -17,11 +17,15 @@ from typing_extensions import Annotated
 import boto3
 
 IMG_BASE_DIR = "images"
+SRC_BASE_DIR = "sources"
 
 
 class VideoPlayback:
     def __init__(
-        self, video_file="sources/Sahara2EU-002.webm", start_at=150, download=False
+        self,
+        video_file=f"{SRC_BASE_DIR}/Sahara2EU-002.webm",
+        start_at=150,
+        download=False,
     ):
         if not Path(video_file).exists():
             structlog.get_logger().warning(
@@ -108,7 +112,7 @@ class VideoPlayback:
 
 
 class StatickBackground:
-    def __init__(self, img_file="sources/BlackMarble_2016_C1_geo.tif") -> None:
+    def __init__(self, img_file=f"{SRC_BASE_DIR}/BlackMarble_2016_C1_geo.tif") -> None:
         if not Path(img_file).exists():
             structlog.get_logger().warning(
                 "Image %s was not found and won't be opened.", img_file
@@ -121,10 +125,6 @@ class StatickBackground:
         left_offset = 15000
         top_offset = 10000
 
-        structlog.get_logger().info(
-            "Cropping image offsets to left = {left_offset} and top = {top_offset}."
-        )
-
         display_width = 3840
         # display_width = 1920
         display_height = 2160
@@ -135,10 +135,11 @@ class StatickBackground:
             left_offset : left_offset + display_height,
             top_offset : top_offset + display_width,
         ]
+
         cropped_img = cropped_img.transpose(1, 2, 0)
         self.img_background = cv2.cvtColor(cropped_img, cv2.COLOR_RGB2BGR)
         structlog.get_logger().info(
-            "Cropped background prepared. Press a key to close."
+            "Preparing cropped image. Press the 'q' key to close prematurely."
         )
 
         self.stopped = False
@@ -153,14 +154,23 @@ class StatickBackground:
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow("window", self.img_background)
-        if (
-            cv2.waitKey(0) & 0xFF == ord("q")
-        ) or self.stopped:  # Why is the bitwise operation necessary?
-            cv2.destroyAllWindows()
+        print(self.stopped)
+        while not self.stopped:
+            if cv2.waitKey(500) & 0xFF == ord("q"):
+                print(":D")
+                self.stopped = True
+                cv2.destroyAllWindows()
+        return
+
+        # while(not self.stopped):
+        #    pass
+        # return
 
     def stop(self):
-        self.stopped = True
-        cv2.destroyAllWindows()
+        if not self.stopped:
+            self.stopped = True
+            cv2.destroyAllWindows()
+            print("XD")
         self.thread.join()
 
 
@@ -169,7 +179,7 @@ def main(
     num_frames: Annotated[int, typer.Argument(help="Number of frames to capture")] = 20,
     start_at: Annotated[
         int, typer.Argument(help="Start video at specific position (seconds)")
-    ] = 200,
+    ] = 100,
     photo: Annotated[
         bool, typer.Argument(help="Use photo (static background) instead of video")
     ] = True,
@@ -216,15 +226,6 @@ def main(
             background = StatickBackground()
         else:
             background = VideoPlayback(start_at=start_at, download=download)
-
-        # Frame Discarding Method for start_at remote streaming video workaround; (it doesn't really help...)
-        """current_frame = 0
-        while current_frame < start_at * 30:
-            log.info("Discarding frame %d", current_frame)
-            ret, _ = background.background_video.read()
-            if not ret:
-                break
-            current_frame += 1"""
 
         background.start()
 

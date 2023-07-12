@@ -2,10 +2,11 @@
 name = "vesna-datagen"
 version = "0.1.0"
 description = "Vesna data generation package"
-authors = ["Zaitra s.r.o."]
+authors = ["Zaitra s.r.o. <info@zaitra.io>"]
 license = "MIT"
 readme = "README.md"
-#packages = [{include = "vesna_datagen"}]
+packages = [{include = "camera_control"}]
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
