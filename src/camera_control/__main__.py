@@ -15,6 +15,7 @@ import typer
 from typing_extensions import Annotated
 
 import boto3
+from botocore.exceptions import ClientError
 
 IMG_BASE_DIR = "images"
 SRC_BASE_DIR = "sources"
@@ -125,10 +126,10 @@ class StatickBackground:
         left_offset = 15000
         top_offset = 10000
 
-        display_width = 3840
-        # display_width = 1920
-        display_height = 2160
-        # display_height = 1080
+        # display_width = 3840
+        display_width = 1920
+        # display_height = 2160
+        display_height = 1080
 
         cropped_img = img[
             ...,
@@ -146,7 +147,6 @@ class StatickBackground:
 
     def start(self):
         self.thread = Thread(target=self.show, args=())
-        # self.thread.daemon = True
         self.thread.start()
         return self
 
@@ -157,32 +157,28 @@ class StatickBackground:
         print(self.stopped)
         while not self.stopped:
             if cv2.waitKey(500) & 0xFF == ord("q"):
-                print(":D")
                 self.stopped = True
                 cv2.destroyAllWindows()
         return
-
-        # while(not self.stopped):
-        #    pass
-        # return
 
     def stop(self):
         if not self.stopped:
             self.stopped = True
             cv2.destroyAllWindows()
-            print("XD")
         self.thread.join()
 
 
 def main(
-    folder_name: Annotated[str, typer.Argument(help="Target Images Folder Name")],
-    num_frames: Annotated[int, typer.Argument(help="Number of frames to capture")] = 20,
+    folder_name: Annotated[
+        str, typer.Argument(help="Target Images Folder Name")
+    ] = "test",
+    num_frames: Annotated[int, typer.Argument(help="Number of frames to capture")] = 8,
     start_at: Annotated[
         int, typer.Argument(help="Start video at specific position (seconds)")
     ] = 100,
     photo: Annotated[
         bool, typer.Argument(help="Use photo (static background) instead of video")
-    ] = True,
+    ] = False,
     download: Annotated[
         bool,
         typer.Argument(
