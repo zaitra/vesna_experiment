@@ -12,8 +12,10 @@ Connect the camera to your machine and aim it at the screen. Run the package wit
 
 The only dependency so far is the Spinnaker SDK Python wheel. It can be found [here](https://www.flir.eu/products/spinnaker-sdk/?vertical=machine+vision&segment=iis).
 
+You should preferably look for "spinnaker_python-3.1.0.79-cp310-cp310-win_amd64.whl", and place it in a dependencies/PySpin/ folder in the root of the project.
+
 ### Installation
-All libraries should be fetchable by [poetry](https://python-poetry.org/).
+All remaining necessary libraries should be fetchable by [poetry](https://python-poetry.org/).
 
 To get poetry, you can install it by pip (Make sure it is separate from the main environment):
 
