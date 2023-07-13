@@ -37,7 +37,11 @@ If all tests pass, then everything should be setup correctly.
 
 ### Main
 
-Two ways to run an experiment:
+For a full list of arguments/parameters:
+
+	python -m src.camera_control --help
+
+Two ways to run the program:
 
 	python -m src.camera_control 'args'
 
