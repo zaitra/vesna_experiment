@@ -1,7 +1,7 @@
-import typer
-from typer.testing import CliRunner
 import cv2
 import EasyPySpin
+import typer
+from typer.testing import CliRunner
 
 
 def test_camera():

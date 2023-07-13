@@ -1,5 +1,6 @@
 import typer
 from typer.testing import CliRunner
+
 import camera_control.__main__ as cc
 
 app = typer.Typer()

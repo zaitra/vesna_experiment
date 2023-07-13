@@ -1,7 +1,7 @@
-import typer
 import boto3
-from botocore.exceptions import ClientError
 import pytest
+import typer
+from botocore.exceptions import ClientError
 
 
 def test_bucket_access():

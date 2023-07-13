@@ -1,21 +1,18 @@
 import argparse
+import logging
 import os
 from pathlib import Path
 from threading import Thread
 from time import time
 
+import boto3
+import cv2
 import EasyPySpin
 import rasterio
-import cv2
-
-import logging
 import structlog
-
 import typer
-from typing_extensions import Annotated
-
-import boto3
 from botocore.exceptions import ClientError
+from typing_extensions import Annotated
 
 IMG_BASE_DIR = "images"
 SRC_BASE_DIR = "sources"
@@ -81,12 +78,13 @@ class VideoPlayback:
         ) = self.background_video.read()  # What is this here for?
         self.stopped = False
 
+    # Start video thread
     def start(self):
         self.thread = Thread(target=self.get, args=())
-        # self.thread.daemon = True
         self.thread.start()
         return self
 
+    # Get video frames until window is closed
     def get(self):
         # os.environ['DISPLAY'] = ":1"
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
@@ -102,12 +100,14 @@ class VideoPlayback:
                 self.stop()
                 cv2.destroyAllWindows()
 
+    # Stop/close background
     def stop(self):
         self.stopped = True
         cv2.destroyAllWindows()
         self.thread.join()
         self.background_video.release()
 
+    # Release video in case of premature exit
     def __exit__(self, exc_type, exc_value, traceback):
         self.background_video.release()
 
@@ -207,18 +207,12 @@ def main(
         cap.set(cv2.CAP_PROP_FPS, 4)
 
         if not cap.isOpened():
-            log.error("Camera can't open\nexit")
+            log.fatal("Camera can't open\nexit")
             cap.release()
             exit(-1)
 
         cap.set_pyspin_value("AdcBitDepth", "Bit12")
         cap.set_pyspin_value("PixelFormat", "Mono16")
-        # cap.set(cv2.CAP_PROP_EXPOSURE, 100) # us
-        # cap.set(cv2.CAP_PROP_EXPOSURE, -1) # default
-        # exposure = cap.get(cv2.CAP_PROP_EXPOSURE)
-        # print(exposure)
-        # gain  = cap.get(cv2.CAP_PROP_GAIN)
-        # gamma  = cap.get(cv2.CAP_PROP_GAMMA)
 
         # Open background
         if photo:
