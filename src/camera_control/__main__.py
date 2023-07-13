@@ -145,11 +145,13 @@ class StatickBackground:
 
         self.stopped = False
 
+    # Start image showing thread
     def start(self):
         self.thread = Thread(target=self.show, args=())
         self.thread.start()
         return self
 
+    # Show image until key is pressed or recording's over
     def show(self):
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -161,6 +163,7 @@ class StatickBackground:
                 cv2.destroyAllWindows()
         return
 
+    # Stop/close background
     def stop(self):
         if not self.stopped:
             self.stopped = True
@@ -186,7 +189,6 @@ def main(
         ),
     ] = False,
 ):
-
     # Initiate logger
     log = structlog.get_logger()
 
@@ -218,11 +220,11 @@ def main(
         # gain  = cap.get(cv2.CAP_PROP_GAIN)
         # gamma  = cap.get(cv2.CAP_PROP_GAMMA)
 
+        # Open background
         if photo:
             background = StatickBackground()
         else:
             background = VideoPlayback(start_at=start_at, download=download)
-
         background.start()
 
         # Begin camera capture loop
