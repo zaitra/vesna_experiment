@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Camera control script for Vesna Experiment
 
 ## Setup
