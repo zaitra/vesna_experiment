@@ -86,11 +86,13 @@ class VideoPlayback:
 
     # Get video frames until window is closed
     def get(self):
-        # os.environ['DISPLAY'] = ":1"
+        os.environ['DISPLAY'] = ":1"
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         while self.background_video.isOpened():
+            structlog.get_logger().info("Querying whether to stop")
             if self.stopped:
+                structlog.get_logger().info("STOPPING!")
                 return
             self.grabbed, self.frame = self.background_video.read()
             # print(self.grabbed)
@@ -99,13 +101,16 @@ class VideoPlayback:
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 self.stop()
                 cv2.destroyAllWindows()
+                cv2.waitKey(1)
 
     # Stop/close background
     def stop(self):
         self.stopped = True
-        cv2.destroyAllWindows()
+        cv2.waitKey(1)
         self.thread.join()
         self.background_video.release()
+        cv2.destroyAllWindows()
+        cv2.waitKey(1)
 
     # Release video in case of premature exit
     def __exit__(self, exc_type, exc_value, traceback):
@@ -126,9 +131,9 @@ class StatickBackground:
         left_offset = 15000
         top_offset = 10000
 
-        # display_width = 3840
+        #display_width = 3840
         display_width = 1920
-        # display_height = 2160
+        #display_height = 2160
         display_height = 1080
 
         cropped_img = img[
@@ -161,6 +166,7 @@ class StatickBackground:
             if cv2.waitKey(500) & 0xFF == ord("q"):
                 self.stopped = True
                 cv2.destroyAllWindows()
+                cv2.waitKey(1)
         return
 
     # Stop/close background
@@ -168,6 +174,7 @@ class StatickBackground:
         if not self.stopped:
             self.stopped = True
             cv2.destroyAllWindows()
+            cv2.waitKey(1)
         self.thread.join()
 
 
@@ -175,13 +182,13 @@ def main(
     folder_name: Annotated[
         str, typer.Argument(help="Target Images Folder Name")
     ] = "test",
-    num_frames: Annotated[int, typer.Argument(help="Number of frames to capture")] = 8,
+    num_frames: Annotated[int, typer.Argument(help="Number of frames to capture")] = 20,
     start_at: Annotated[
         int, typer.Argument(help="Start video at specific position (seconds)")
-    ] = 100,
+    ] = 120,
     photo: Annotated[
         bool, typer.Argument(help="Use photo (static background) instead of video")
-    ] = False,
+    ] = True,
     download: Annotated[
         bool,
         typer.Argument(
