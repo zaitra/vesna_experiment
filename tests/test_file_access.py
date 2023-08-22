@@ -35,6 +35,7 @@ def check_remote_access():
             print(f"Error occurred while accessing bucket '{bucket_name}': {str(e)}")
             return False
 
+
 def check_local_access():
     return check_run_photo() and check_run_video()
 
@@ -49,11 +50,18 @@ def check_run_photo():
 
 def check_run_video():
     valid = True
-    result = runner.invoke(app, ["test_img_folder_vid", "5", "0", ],)
+    result = runner.invoke(
+        app,
+        [
+            "test_img_folder_vid",
+            "5",
+            "0",
+        ],
+    )
     valid = valid and result.exit_code == 0
     valid = valid and ("Stopping background" in result.stdout)
     return valid
 
+
 def test_file_access():
     assert check_local_access() or check_remote_access()
-    

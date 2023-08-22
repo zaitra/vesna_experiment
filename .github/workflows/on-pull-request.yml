@@ -1,0 +1,22 @@
+name: pr-pre-commit
+run-name: ${{ github.actor }} is running pre-commit checks for pull-request call.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+#This does a few things:
+#1. clones the code
+#2. installs python
+#3. sets up the pre-commit cache
+#By default, this action runs all the hooks against all the files.
+#extra_args lets users specify a single hook id and/or options to pass to pre-commit run.
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+    - uses: pre-commit/action@v3.0.0

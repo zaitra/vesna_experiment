@@ -86,7 +86,7 @@ class VideoPlayback:
 
     # Get video frames until window is closed
     def get(self):
-        os.environ['DISPLAY'] = ":1"
+        os.environ["DISPLAY"] = ":1"
         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         while self.background_video.isOpened():
@@ -131,9 +131,9 @@ class StatickBackground:
         left_offset = 15000
         top_offset = 10000
 
-        #display_width = 3840
+        # display_width = 3840
         display_width = 1920
-        #display_height = 2160
+        # display_height = 2160
         display_height = 1080
 
         cropped_img = img[

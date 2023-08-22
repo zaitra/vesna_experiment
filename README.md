@@ -18,7 +18,7 @@ You should preferably look for "spinnaker_python-3.1.0.79-cp310-cp310-win_amd64.
 
 #### Optional alternative setup (may be outdated)
 
-1. To install SpinMaked SDK, download archives for both system package and Python module from https://flir.app.boxcn.net/v/SpinnakerSDK?pn=Spinnaker+SDK&vn=Spinnaker_SDK 
+1. To install SpinMaked SDK, download archives for both system package and Python module from https://flir.app.boxcn.net/v/SpinnakerSDK?pn=Spinnaker+SDK&vn=Spinnaker_SDK
 Note that the latest supported Ubuntu is 20, so be carefull when selecting OS for RPI or other Linux machine.
 
 
@@ -29,13 +29,13 @@ sudo apt install qt5-default libgomp1
 
 3. Install SpinMaker SDK
 ```
-cd spinnaker-2.7.0.128-amd64/ 
+cd spinnaker-2.7.0.128-amd64/
 sudo sh install_spinnaker.sh
 ```
 
 4. Install Python wheel from the second archive.
 ```
-pip install --user spinnaker_python-2.7.0.128-cp38-cp38-linux_x86_64.whl 
+pip install --user spinnaker_python-2.7.0.128-cp38-cp38-linux_x86_64.whl
 ```
 
 More detailed information are in the README in the archive.
