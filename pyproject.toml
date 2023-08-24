@@ -7,13 +7,8 @@ license = "MIT"
 readme = "README.md"
 packages = [{include = "camera_control", from = "src"}]
 
-
 [tool.poetry.dependencies]
 python = "^3.10"
-spinnaker-python = [
-{platform = "linux", url = "https://github.com/zaitra/vesna_experiment/releases/download/0.1/spinnaker_python-3.1.0.79-cp310-cp310-linux_x86_64.whl"},
-{platform = "windows", file = "dependencies/PySpin/spinnaker_python-3.1.0.79-cp310-cp310-win_amd64.whl"}
-]
 EasyPySpin = "2.0.1"
 structlog = "23.1.0"
 typer = "0.9.0"

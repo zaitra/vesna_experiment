@@ -7,9 +7,13 @@ from time import time
 
 import boto3
 import cv2
-import EasyPySpin
-import rasterio
 import structlog
+
+try:
+    import EasyPySpin
+except:
+    structlog.get_logger().warning("Can't PySpin modules")
+import rasterio
 import typer
 from botocore.exceptions import ClientError
 from typing_extensions import Annotated

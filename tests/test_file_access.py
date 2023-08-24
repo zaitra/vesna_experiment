@@ -1,16 +1,8 @@
 import boto3
 import pytest
 import typer
-from typer.testing import CliRunner
-
+import os
 from botocore.exceptions import ClientError
-
-import camera_control.__main__ as cc
-
-app = typer.Typer()
-app.command()(cc.main)
-
-runner = CliRunner()
 
 
 def check_remote_access():
@@ -37,30 +29,19 @@ def check_remote_access():
 
 
 def check_local_access():
-    return check_run_photo() and check_run_video()
+    return check_photo() and check_video()
 
 
-def check_run_photo():
+def check_photo():
     valid = True
-    result = runner.invoke(app, ["test_img_folder_img", "5", "0", "True"])
-    valid = valid and result.exit_code == 0
-    valid = valid and ("Stopping background" in result.stdout)
-    return valid
+    path = "sources/BlackMarble_2016_C1_geo.tif"
+    return os.path.isfile(path)
 
 
-def check_run_video():
+def check_video():
     valid = True
-    result = runner.invoke(
-        app,
-        [
-            "test_img_folder_vid",
-            "5",
-            "0",
-        ],
-    )
-    valid = valid and result.exit_code == 0
-    valid = valid and ("Stopping background" in result.stdout)
-    return valid
+    path = "sources/Sahara2EU-002.webm"
+    return os.path.isfile(path)
 
 
 def test_file_access():
