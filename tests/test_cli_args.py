@@ -1,6 +1,5 @@
 import typer
 from typer.testing import CliRunner
-import structlog
 
 import camera_control.__main__ as cc
 
