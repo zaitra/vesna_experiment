@@ -12,38 +12,32 @@ Connect the camera to your machine and aim it at the screen. Run the package wit
 
 ### Dependencies
 
-The only dependency so far is the Spinnaker SDK Python wheel. It can be found [here](https://www.flir.eu/products/spinnaker-sdk/?vertical=machine+vision&segment=iis).
+The only dependency so far is the Spinnaker SDK and the associated python wheel. They can be found [here](https://www.flir.eu/products/spinnaker-sdk/?vertical=machine+vision&segment=iis).
 
-You should preferably look for "spinnaker_python-3.1.0.79-cp310-cp310-win_amd64.whl", and place it in a dependencies/PySpin/ folder in the root of the project.
+You should preferably look for "spinnaker_python-3.1.0.79-cp310-cp310-linux_x86_64" for Linux and "spinnaker_python-3.1.0.79-cp310-cp310-win_amd64" for Windows.
 
-#### Optional alternative setup (may be outdated)
-
-1. To install SpinMaked SDK, download archives for both system package and Python module from https://flir.app.boxcn.net/v/SpinnakerSDK?pn=Spinnaker+SDK&vn=Spinnaker_SDK 
+*Alternatively,* download archives for both system package and Python module from https://flir.app.boxcn.net/v/SpinnakerSDK?pn=Spinnaker+SDK&vn=Spinnaker_SDK
 Note that the latest supported Ubuntu is 20, so be carefull when selecting OS for RPI or other Linux machine.
 
-
-2. Install missing dependencies
+Install SpinMaker SDK
 ```
-sudo apt install qt5-default libgomp1
-```
-
-3. Install SpinMaker SDK
-```
-cd spinnaker-2.7.0.128-amd64/ 
+cd spinnaker-2.7.0.128-amd64/
 sudo sh install_spinnaker.sh
 ```
 
-4. Install Python wheel from the second archive.
+Install Python wheel from the second archive.
 ```
-pip install --user spinnaker_python-2.7.0.128-cp38-cp38-linux_x86_64.whl 
+pip install --user spinnaker_python-2.7.0.128-cp38-cp38-linux_x86_64.whl
 ```
 
 More detailed information are in the README in the archive.
 
 ### Installation
-All remaining necessary libraries should be fetchable by [poetry](https://python-poetry.org/).
+All remaining necessary libraries and dependencies should be fetchable by [poetry](https://python-poetry.org/).
 
 To get poetry, you can install it by pip (Make sure it is separate from the main environment):
+
+	pip install poetry
 
 Then, install the libraries as described in pyproject.toml by:
 
